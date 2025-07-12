@@ -1,10 +1,12 @@
-#ifdef ECERE_STATIC
-public import static "ecere"
+#ifdef EC_STATIC
+public import static "ecrt"
 #else
-public import "ecere"
+public import "ecrt"
 #endif
 
 import "e3dDefs"
+
+import "Object"
 
 #if defined(__UWP__)
 // FIXME:
@@ -170,7 +172,8 @@ void freeE3DMeshMaterials(Mesh mesh)
    }
 }
 
-void freeE3DObjectMaterials(Object object)
+// REVIEW:
+public void freeE3DObjectMaterials(Object object)
 {
    Object o;
 
@@ -680,6 +683,7 @@ static void readBlocks(E3DContext ctx, File f, DisplaySystem displaySystem, E3DB
                if(allocedFeatures == { vertices = true, normals = true, texCoords1 = true })
                   // TODO: Review issues with translucent primitives when this is set...
                   ; //allocedFeatures.interleaved = true; // Loading this common format as interleaved for now...
+
                if(vSize && mesh.Allocate(allocedFeatures, nVertices, displaySystem))
                {
                   bool loadIL = false;
@@ -689,6 +693,7 @@ static void readBlocks(E3DContext ctx, File f, DisplaySystem displaySystem, E3DB
                   SkinVert * bones = null;
                   int i;
 
+#if 1
                   if(allocedFeatures.interleaved)
                   {
                      loadIL = true;
@@ -700,15 +705,16 @@ static void readBlocks(E3DContext ctx, File f, DisplaySystem displaySystem, E3DB
                   }
                   else
                   {
-                     if(features.vertices) vertex = (Vector3Df*)((byte *)mesh.vertices);
-                     if(features.normals)  normal = (Vector3Df*)((byte *)mesh.normals);
-                     if(features.tangents) tangent = (Vector3Df*)((byte *)mesh.tangents);
+                     if(features.vertices) { vertex = (Vector3Df*)((byte *)mesh.vertices); }
+                     if(features.normals)  { normal = (Vector3Df*)((byte *)mesh.normals); }
+                     if(features.tangents) { tangent = (Vector3Df*)((byte *)mesh.tangents); }
                      if(!signBitan && features.tangents) bitangent = mesh.tangents+1;
-                     if(features.texCoords1) texCoord = (Pointf*)((byte *)mesh.texCoords);
+                     if(features.texCoords1) { texCoord = (Pointf*)((byte *)mesh.texCoords); }
                      // if(features.texCoords2) texCoord2 = (Pointf*)((byte *)mesh.texCoords2);
-                     if(features.colors) color = (ColorRGBAf*)((byte *)mesh.colors /*+ cOffset*/);     // REVIEW: cOffset here?
+                     if(features.colors) { color = (ColorRGBAf*)((byte *)mesh.colors /*+ cOffset*/); }    // REVIEW: cOffset here?
                      if(skin /*features.bones*/) bones = skin.skinVerts.array;
                   }
+#endif
 
                   for(i = 0; i < nVertices; i++)
                   {

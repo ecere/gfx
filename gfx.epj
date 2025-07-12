@@ -10,7 +10,8 @@
          "src/gfx/drivers/harfbuzz",
          "/usr/X11R6/include",
          "/usr/X11R6/include/freetype2",
-         "src/gfx/drivers/gl3"
+         "src/gfx/drivers/gl3",
+         "deps/lzma-2107"
       ],
       "DefaultNameSpace" : "gfx",
       "TargetType" : "SharedLibrary",
@@ -21,7 +22,11 @@
          "jpeg",
          "png",
          "z",
-         "freetype"
+         "freetype",
+         "7z-lzma"
+      ],
+      "LibraryDirs" : [
+         "deps/lzma-2107/obj/release.$(PLATFORM)"
       ]
    },
    "Platforms" : [
@@ -514,7 +519,16 @@
                         {
                            "Folder" : "models",
                            "Files" : [
-                              "Object3DSFormat.ec"
+                              {
+                                 "Folder" : "e3d",
+                                 "Files" : [
+                                    "e3dDefs.ec",
+                                    "e3dRead.ec",
+                                    "e3dWrite.ec"
+                                 ]
+                              },
+                              "Object3DSFormat.ec",
+                              "e3d.ec"
                            ]
                         },
                         {

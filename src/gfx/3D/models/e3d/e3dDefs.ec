@@ -1,8 +1,10 @@
-#ifdef ECERE_STATIC
-public import static "ecere"
+#ifdef EC_STATIC
+public import static "ecrt"
 #else
-public import "ecere"
+public import "ecrt"
 #endif
+
+import "Vector3D"
 
 enum E3DBlockType : uint16
 {
@@ -208,11 +210,11 @@ uint32 vecfPack10i(Vector3Df src, Vector3Df v2)
    return sum;
 }
 
-enum TextureExtensionAction {keep, strip, add};
+public enum TextureExtensionAction {keep, strip, add};
 
-enum TextureEmbeddingMethod {embed, reference, refAndWrite};
+public enum TextureEmbeddingMethod {embed, reference, refAndWrite};
 
-struct E3DOptions
+public struct E3DOptions
 {
    Map<uint, Bitmap> texturesByID;
    const String texturesPath;

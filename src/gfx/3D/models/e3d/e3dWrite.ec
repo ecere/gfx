@@ -1,10 +1,12 @@
-#ifdef ECERE_STATIC
-public import static "ecere"
+#ifdef EC_STATIC
+public import static "ecrt"
 #else
-public import "ecere"
+public import "ecrt"
 #endif
 
 import "e3dDefs"
+
+import "Bitmap"
 
 static struct E3DBlockHeader
 {

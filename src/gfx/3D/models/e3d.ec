@@ -1,11 +1,13 @@
-#ifdef ECERE_STATIC
-public import static "ecere"
+#ifdef EC_STATIC
+public import static "ecrt"
 #else
-public import "ecere"
+public import "ecrt"
 #endif
 
 import "e3dRead"
 import "e3dWrite"
+
+import "Bitmap"
 
 public class E3DFormat : ObjectFormat
 {
