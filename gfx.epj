@@ -1202,7 +1202,7 @@
                                  ]
                               },
                               {
-                                 "FileName" : "../deps/etcpak/QuickETC2Pak.c",
+                                 "FileName" : "deps/etcpak/QuickETC2Pak.c",
                                  "Configurations" : [
                                     {
                                        "Name" : "Debug",
