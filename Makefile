@@ -1,4 +1,4 @@
-.PHONY: all objdir cleantarget clean realclean distclean
+.PHONY: all objdir cleantarget clean realclean distclean lzma
 
 # CORE VARIABLES
 
@@ -56,7 +56,11 @@ _ECSOURCES1 = \
 	src/gfx/3D/meshes/Cube.ec \
 	src/gfx/3D/meshes/SkyBox.ec \
 	src/gfx/3D/meshes/Sphere.ec \
+	src/gfx/3D/models/e3d/e3dDefs.ec \
+	src/gfx/3D/models/e3d/e3dRead.ec \
+	src/gfx/3D/models/e3d/e3dWrite.ec \
 	src/gfx/3D/models/Object3DSFormat.ec \
+	src/gfx/3D/models/e3d.ec \
 	src/gfx/3D/depthsort/Tetrahedron.ec \
 	src/gfx/3D/depthsort/TopoSort.ec \
 	src/gfx/3D/depthsort/DepthSort.ec \
@@ -89,10 +93,10 @@ _ECSOURCES1 = \
 	src/gfx/drivers/lfbConvert.ec \
 	src/gfx/drivers/LFBDisplayDriver.ec \
 	$(if $(or $(LINUX_TARGET),$(OSX_TARGET)),src/gfx/drivers/NCursesDisplayDriver.ec,) \
-	src/gfx/drivers/OpenGLDisplayDriver.ec \
-	$(if $(WINDOWS_TARGET),src/gfx/drivers/Win32BitmapPrinterDisplayDriver.ec,) \
-	$(if $(WINDOWS_TARGET),src/gfx/drivers/Win32ConsoleDisplayDriver.ec,)
+	src/gfx/drivers/OpenGLDisplayDriver.ec
 _ECSOURCES2 = \
+	$(if $(WINDOWS_TARGET),src/gfx/drivers/Win32BitmapPrinterDisplayDriver.ec,) \
+	$(if $(WINDOWS_TARGET),src/gfx/drivers/Win32ConsoleDisplayDriver.ec,) \
 	$(if $(WINDOWS_TARGET),src/gfx/drivers/Win32PrinterDisplayDriver.ec,) \
 	$(if $(or $(LINUX_TARGET),$(OSX_TARGET)),src/gfx/drivers/XDisplayDriver.ec,) \
 	src/gfx/newFonts/atlasBuilder.ec \
@@ -207,7 +211,7 @@ SOURCES = $(ECSOURCES) \
 	src/gfx/drivers/harfbuzz/harfbuzz-impl.c \
 	src/gfx/drivers/harfbuzz/harfbuzz-thai.c \
 	src/gfx/drivers/gl3/gl_compat_4_4.c \
-	../deps/etcpak/QuickETC2Pak.c \
+	deps/etcpak/QuickETC2Pak.c \
 	$(EC_SDK_SRC)/ecrt/src/containers/cc/cc.c \
 	$(EC_SDK_SRC)/ecrt/src/containers/cc/mm.c \
 	$(EC_SDK_SRC)/ecrt/src/containers/cc/ccstr.c \
@@ -231,7 +235,8 @@ LIBS += \
 	$(call _L,jpeg) \
 	$(call _L,png) \
 	$(call _L,z) \
-	$(call _L,freetype)
+	$(call _L,freetype) \
+	$(call _L,7z-lzma)
 endif
 
 PRJ_CFLAGS += \
@@ -262,7 +267,8 @@ PRJ_CFLAGS += \
 			 -Isrc/gfx/drivers/harfbuzz \
 			 -I/usr/X11R6/include \
 			 -I/usr/X11R6/include/freetype2 \
-			 -Isrc/gfx/drivers/gl3
+			 -Isrc/gfx/drivers/gl3 \
+			 -Ideps/lzma-2107
 
 CUSTOM1_PRJ_CFLAGS = \
 			 -Isrc/gfx/newFonts/cc \
@@ -288,20 +294,13 @@ OFLAGS += \
 	 -L$(call quote_path,../deps/jpeg-9a/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)) \
 	 -L$(call quote_path,../deps/libpng-1.6.12/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)) \
 	 -L$(call quote_path,../deps/libungif-4.1.1/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)) \
-	 -L$(call quote_path,../deps/freetype-2.3.12/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)) \
-	 -L$(call quote_path,../deps/curl-8.5.0/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)) \
-	 $(if $(OPENSSL_BIN_DIR),-L$(call quote_path,$(OPENSSL_BIN_DIR)),) \
-	 $(if $(OPENSSL_LIB_DIR),-L$(call quote_path,$(OPENSSL_LIB_DIR)),)
+	 -L$(call quote_path,../deps/freetype-2.3.12/obj/release.$(PLATFORM)$(COMPILER_SUFFIX))
 LIBS += \
 	$(call _L,dxguid) \
 	$(call _L,ddraw) \
-	$(call _L,winmm) \
 	$(call _L,opengl32) \
 	$(call _L,kernel32) \
 	$(call _L,gdi32) \
-	$(call _L,advapi32) \
-	$(call _L,shell32) \
-	$(call _L,winspool) \
 	$(call _L,ungif)
 endif
 
@@ -358,6 +357,11 @@ OFLAGS += \
 
 CECFLAGS += -cpp $(_CPP)
 
+ifndef STATIC_LIBRARY_TARGET
+OFLAGS += \
+	 -L$(call quote_path,deps/lzma-2107/obj/release.$(PLATFORM)$(COMPILER_SUFFIX)$(DEBUG_SUFFIX))
+endif
+
 # TARGETS
 
 all: objdir $(TARGET)
@@ -385,9 +389,12 @@ $(RESOURCES_EAR): $(RESOURCES) | objdir
 	$(EAR) aw$(EARFLAGS) $(RESOURCES_EAR) src/gfx/drivers/gl3/default.frag src/gfx/drivers/gl3/default.vert "shaders"
 endif
 
+lzma:
+	+cd deps/lzma-2107 && $(MAKE)
+
 $(SYMBOLS): | objdir
 $(OBJECTS): | objdir
-$(TARGET): $(SOURCES) $(RESOURCES_EAR) $(SYMBOLS) $(OBJECTS) | objdir
+$(TARGET): $(SOURCES) $(RESOURCES_EAR) $(SYMBOLS) $(OBJECTS) lzma | objdir
 	@$(call rm,$(OBJ)objects.lst)
 	@$(call touch,$(OBJ)objects.lst)
 	$(call addtolistfile,$(_OBJECTS),$(OBJ)objects.lst)
@@ -412,13 +419,23 @@ endif
 ifdef SHARED_LIBRARY_TARGET
 ifdef LINUX_TARGET
 ifdef LINUX_HOST
+	$(if $(basename $(basename $(VER))),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(OBJ)$(LP)$(MODULE)$(SO)$(basename $(basename $(VER))),)
 	$(if $(basename $(VER)),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(OBJ)$(LP)$(MODULE)$(SO)$(basename $(VER)),)
 	$(if $(VER),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(OBJ)$(LP)$(MODULE)$(SO),)
 endif
 endif
 endif
-#	$(call mkdir,../$(SODESTDIR))
-#	$(call cp,$(TARGET),../$(SODESTDIR))
+	$(call mkdir,$(GFX_ABSPATH)/$(SODESTDIR))
+	$(call cp,$(TARGET),$(GFX_ABSPATH)/$(SODESTDIR))
+ifdef SHARED_LIBRARY_TARGET
+ifdef LINUX_HOST
+ifndef SKIP_SONAME
+	$(if $(basename $(VER)),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(GFX_ABSPATH)/$(HOST_SODESTDIR)$(LP)$(MODULE)$(SO)$(basename $(VER)),)
+	$(if $(basename $(basename $(VER))),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(GFX_ABSPATH)/$(HOST_SODESTDIR)$(LP)$(MODULE)$(SO)$(basename $(basename $(VER))),)
+	$(if $(VER),ln -sf $(LP)$(MODULE)$(SO)$(VER) $(GFX_ABSPATH)/$(HOST_SODESTDIR)$(LP)$(MODULE)$(SO),)
+endif
+endif
+endif
 
 install:
 	$(call cp,$(TARGET),"$(DESTLIBDIR)/")
@@ -436,8 +453,20 @@ $(OBJ)SkyBox.sym: src/gfx/3D/meshes/SkyBox.ec
 $(OBJ)Sphere.sym: src/gfx/3D/meshes/Sphere.ec
 	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/meshes/Sphere.ec) -o $(call quote_path,$@)
 
+$(OBJ)e3dDefs.sym: src/gfx/3D/models/e3d/e3dDefs.ec
+	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/models/e3d/e3dDefs.ec) -o $(call quote_path,$@)
+
+$(OBJ)e3dRead.sym: src/gfx/3D/models/e3d/e3dRead.ec
+	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/models/e3d/e3dRead.ec) -o $(call quote_path,$@)
+
+$(OBJ)e3dWrite.sym: src/gfx/3D/models/e3d/e3dWrite.ec
+	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/models/e3d/e3dWrite.ec) -o $(call quote_path,$@)
+
 $(OBJ)Object3DSFormat.sym: src/gfx/3D/models/Object3DSFormat.ec
 	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/models/Object3DSFormat.ec) -o $(call quote_path,$@)
+
+$(OBJ)e3d.sym: src/gfx/3D/models/e3d.ec
+	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/models/e3d.ec) -o $(call quote_path,$@)
 
 $(OBJ)Tetrahedron.sym: src/gfx/3D/depthsort/Tetrahedron.ec
 	$(ECP) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,src/gfx/3D/depthsort/Tetrahedron.ec) -o $(call quote_path,$@)
@@ -630,8 +659,20 @@ $(OBJ)SkyBox.c: src/gfx/3D/meshes/SkyBox.ec $(OBJ)SkyBox.sym | $(SYMBOLS)
 $(OBJ)Sphere.c: src/gfx/3D/meshes/Sphere.ec $(OBJ)Sphere.sym | $(SYMBOLS)
 	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/meshes/Sphere.ec) -o $(call quote_path,$@) -symbols $(OBJ)
 
+$(OBJ)e3dDefs.c: src/gfx/3D/models/e3d/e3dDefs.ec $(OBJ)e3dDefs.sym | $(SYMBOLS)
+	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/models/e3d/e3dDefs.ec) -o $(call quote_path,$@) -symbols $(OBJ)
+
+$(OBJ)e3dRead.c: src/gfx/3D/models/e3d/e3dRead.ec $(OBJ)e3dRead.sym | $(SYMBOLS)
+	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/models/e3d/e3dRead.ec) -o $(call quote_path,$@) -symbols $(OBJ)
+
+$(OBJ)e3dWrite.c: src/gfx/3D/models/e3d/e3dWrite.ec $(OBJ)e3dWrite.sym | $(SYMBOLS)
+	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/models/e3d/e3dWrite.ec) -o $(call quote_path,$@) -symbols $(OBJ)
+
 $(OBJ)Object3DSFormat.c: src/gfx/3D/models/Object3DSFormat.ec $(OBJ)Object3DSFormat.sym | $(SYMBOLS)
 	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/models/Object3DSFormat.ec) -o $(call quote_path,$@) -symbols $(OBJ)
+
+$(OBJ)e3d.c: src/gfx/3D/models/e3d.ec $(OBJ)e3d.sym | $(SYMBOLS)
+	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/models/e3d.ec) -o $(call quote_path,$@) -symbols $(OBJ)
 
 $(OBJ)Tetrahedron.c: src/gfx/3D/depthsort/Tetrahedron.ec $(OBJ)Tetrahedron.sym | $(SYMBOLS)
 	$(ECC) $(CFLAGS) $(CECFLAGS) $(ECFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,src/gfx/3D/depthsort/Tetrahedron.ec) -o $(call quote_path,$@) -symbols $(OBJ)
@@ -824,8 +865,20 @@ $(OBJ)SkyBox$(O): $(OBJ)SkyBox.c
 $(OBJ)Sphere$(O): $(OBJ)Sphere.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)Sphere.c) -o $(call quote_path,$@)
 
+$(OBJ)e3dDefs$(O): $(OBJ)e3dDefs.c
+	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)e3dDefs.c) -o $(call quote_path,$@)
+
+$(OBJ)e3dRead$(O): $(OBJ)e3dRead.c
+	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)e3dRead.c) -o $(call quote_path,$@)
+
+$(OBJ)e3dWrite$(O): $(OBJ)e3dWrite.c
+	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)e3dWrite.c) -o $(call quote_path,$@)
+
 $(OBJ)Object3DSFormat$(O): $(OBJ)Object3DSFormat.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)Object3DSFormat.c) -o $(call quote_path,$@)
+
+$(OBJ)e3d$(O): $(OBJ)e3d.c
+	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)e3d.c) -o $(call quote_path,$@)
 
 $(OBJ)Tetrahedron$(O): $(OBJ)Tetrahedron.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)Tetrahedron.c) -o $(call quote_path,$@)
@@ -959,8 +1012,8 @@ $(OBJ)defaultShader$(O): $(OBJ)defaultShader.c
 $(OBJ)GLMultiDraw$(O): $(OBJ)GLMultiDraw.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) $(FVISIBILITY) -c $(call quote_path,$(OBJ)GLMultiDraw.c) -o $(call quote_path,$@)
 
-$(OBJ)QuickETC2Pak$(O): ../deps/etcpak/QuickETC2Pak.c
-	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,../deps/etcpak/QuickETC2Pak.c) -o $(call quote_path,$@)
+$(OBJ)QuickETC2Pak$(O): deps/etcpak/QuickETC2Pak.c
+	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,deps/etcpak/QuickETC2Pak.c) -o $(call quote_path,$@)
 
 ifneq ($(WINDOWS_TARGET),)
 $(OBJ)Direct3D8DisplayDriver$(O): $(OBJ)Direct3D8DisplayDriver.c

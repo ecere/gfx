@@ -3,7 +3,7 @@
 # CORE VARIABLES
 
 MODULE := lzma
-VERSION := 
+VERSION :=
 CONFIG := release
 ifndef COMPILER
 COMPILER := default
@@ -33,13 +33,13 @@ CONSOLE = -mwindows
 
 _CF_DIR = .configs/
 
-GNOSIS3_ABSPATH := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))../../
+GFX_ABSPATH := $(dir $(realpath $(firstword $(MAKEFILE_LIST))))../../
 
-ifndef ECERE_SDK_SRC
-ECERE_SDK_SRC := $(GNOSIS3_ABSPATH)../ecere-sdk
+ifndef EC_SDK_SRC
+EC_SDK_SRC := $(GFX_ABSPATH)../eC
 endif
 
-_CF_DIR = $(ECERE_SDK_SRC)/
+_CF_DIR = $(EC_SDK_SRC)/
 include $(_CF_DIR)crossplatform.mk
 include $(_CF_DIR)default.cf
 
@@ -47,7 +47,7 @@ include $(_CF_DIR)default.cf
 
 OBJ = obj/$(CONFIG).$(PLATFORM)$(COMPILER_SUFFIX)$(DEBUG_SUFFIX)/
 
-RES = 
+RES =
 
 TARGET_NAME := 7z-lzma
 
@@ -64,8 +64,6 @@ _OBJECTS1 = \
 	$(OBJ)7zDec$(O) \
 	$(OBJ)7zFile$(O) \
 	$(OBJ)7zStream$(O) \
-	$(OBJ)Aes$(O) \
-	$(OBJ)AesOpt$(O) \
 	$(OBJ)Alloc$(O) \
 	$(OBJ)Bcj2$(O) \
 	$(OBJ)Bcj2Enc$(O) \
@@ -85,10 +83,10 @@ _OBJECTS1 = \
 	$(OBJ)LzmaEnc$(O) \
 	$(OBJ)LzmaLib$(O) \
 	$(OBJ)MtCoder$(O) \
-	$(OBJ)MtDec$(O)
-_OBJECTS2 = \
+	$(OBJ)MtDec$(O) \
 	$(OBJ)Ppmd7$(O) \
-	$(OBJ)Ppmd7Dec$(O) \
+	$(OBJ)Ppmd7Dec$(O)
+_OBJECTS2 = \
 	$(OBJ)Ppmd7Enc$(O) \
 	$(OBJ)Sort$(O)
 
@@ -104,8 +102,6 @@ SOURCES = \
 	7zDec.c \
 	7zFile.c \
 	7zStream.c \
-	Aes.c \
-	AesOpt.c \
 	Alloc.c \
 	Bcj2.c \
 	Bcj2Enc.c \
@@ -218,12 +214,6 @@ $(OBJ)7zFile$(O): 7zFile.c
 
 $(OBJ)7zStream$(O): 7zStream.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,7zStream.c) -o $(call quote_path,$@)
-
-$(OBJ)Aes$(O): Aes.c
-	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,Aes.c) -o $(call quote_path,$@)
-
-$(OBJ)AesOpt$(O): AesOpt.c
-	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,AesOpt.c) -o $(call quote_path,$@)
 
 $(OBJ)Alloc$(O): Alloc.c
 	$(CC) $(CFLAGS) $(PRJ_CFLAGS) -c $(call quote_path,Alloc.c) -o $(call quote_path,$@)
