@@ -194,8 +194,8 @@
             ],
             "FastMath" : true,
             "PostbuildCommands" : [
-               "$(call mkdir,../$(SODESTDIR))",
-               "$(call cp,$(TARGET),../$(SODESTDIR))"
+               "$(call mkdir,$(SODESTDIR))",
+               "$(call cp,$(TARGET),$(SODESTDIR))"
             ],
             "InstallCommands" : [
                "$(call cp,$(TARGET),\"$(DESTLIBDIR)/\")",
