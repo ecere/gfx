@@ -19,6 +19,29 @@ public class GfxResourceManager
    Display display;
    OldList resources;
 
+   ~GfxResourceManager()
+    {
+      // if(resources) {resources.Free(); delete resources;}
+         ResPtr ptr, nxtPtr;
+         for(ptr = resources.first; ptr; ptr = nxtPtr)
+         {
+            nxtPtr = ptr.next;
+            // Unload Graphics here if window is created already
+            if(display)
+            {
+               if(ptr.loaded)
+               {
+                  display.Lock(false);
+                  display.displaySystem.UnloadResource(ptr.resource, ptr.loaded);
+                  display.Unlock();
+                  ptr.loaded = null;
+               }
+            }
+            delete ptr.resource;
+            resources.Delete(ptr);
+         }
+   }
+
 public:
    public property Display display
    {
